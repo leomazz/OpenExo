@@ -1,6 +1,7 @@
 
 
 #if defined(ARDUINO_TEENSY36)  || defined(ARDUINO_TEENSY41)
+#include "SdOnce.h"
 #include "ListCtrlParams.h"
 
 #ifndef DMAMEM
@@ -48,7 +49,7 @@ void ctrl_param_array_gen(uint8_t* config_to_send) {
 	memset(txBuffer_bulkStr, 0, sizeof(txBuffer_bulkStr));
 
 	//Begin SD card
-	if (!SD.begin(SD_SELECT)) {
+	if (!oex_sd_begin(SD_SELECT)) {
 			while (1)
 			
 			if (Serial)

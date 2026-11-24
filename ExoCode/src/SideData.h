@@ -84,6 +84,30 @@ class SideData {
         float expected_duration_window_lower_coeff; /**< Factor to multiply by the expected duration to get the lower limit of the window to determine if a ground strike is considered a new step. */
 
         Inclination inclination;        /**< Data for inclination */
+
+        /* ---- FSR-free gait phase (see FsrFreeConfig.h) ---- */
+        // Outputs of the original FSR pipeline, saved before any override.
+        float fsr_percent_gait = -1;
+        float fsr_percent_stance = -1;
+        float fsr_expected_step_duration = -1;
+        bool  fsr_ground_strike = false;
+        bool  fsr_toe_off = false;
+        // Phase-portrait estimator on the hip encoder angle.
+        float pp_enc_input_deg = 0;
+        float pp_enc_phase = -1;
+        float pp_enc_stride_ms = -1;
+        bool  pp_enc_valid = false;
+        bool  pp_enc_hs = false;
+        // Phase-portrait estimator on the thigh angle (encoder + pelvis IMU).
+        float pp_imu_input_deg = 0;
+        float pp_imu_phase = -1;
+        float pp_imu_stride_ms = -1;
+        bool  pp_imu_valid = false;
+        bool  pp_imu_hs = false;
+        // Which source drives the controllers, safeguard flag, cost.
+        uint8_t phase_source = 0;
+        bool  phase_inhibit = false;
+        float estimator_exec_us = 0;
 };
 
 #endif

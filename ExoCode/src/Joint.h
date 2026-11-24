@@ -157,6 +157,7 @@ class HipJoint : public _Joint
         //Objects for joint specific controllers
         ZeroTorque _zero_torque;                        /**< Zero torque controller */
         FranksCollinsHip _franks_collins_hip;           /**< Franks Collins Hip controller */
+        FranksCollinsHip _franks_collins_no_fsr;        /**< Same controller, gait phase from the hip encoder / IMU (Side::_run_fsr_free) */
         Spline _spline;                                 /**< Spline controller */
         ConstantTorque _constant_torque;                /**< Constant torque controller */
         Chirp _chirp;                                   /**< Chirp Controller for Device Characterization */                    

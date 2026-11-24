@@ -25,6 +25,9 @@
 #include "StatusDefs.h"
 #include "ThIMU.h"
 #include "InclinationDetector.h"
+#include "FsrFreeConfig.h"
+#include "PhasePortrait.h"
+#include "PelvisImu.h"
 
 #include <stdint.h>
 #include <algorithm>
@@ -169,6 +172,16 @@ class Side
 
         //Inclination object for the side
         InclinationDetector* inclination_detector;
+
+        /* ---- FSR-free gait phase ---- */
+        PhasePortrait _pp_enc;   /**< Phase portrait of the hip encoder angle */
+        PhasePortrait _pp_imu;   /**< Phase portrait of the thigh angle (encoder + pelvis IMU) */
+        void _run_fsr_free();    /**< Runs both estimators and, if selected, replaces the FSR phase */
+        void _restore_fsr_fields(); /**< Gives back to the FSR pipeline the fields it owns */
+        bool _fsr_fields_overridden = false;
+        float _fsr_expected_step_duration = -1;
+        float _fsr_expected_stance_duration = -1;
+        float _fsr_expected_swing_duration = -1;
         
         bool _is_left;                              /**< Stores which side it is on */
         

@@ -175,6 +175,10 @@ void _CANMotor::read_data()
                 _motor_data->p = direction_modifier * _uint_to_float(p_int, -_P_MAX, _P_MAX, 16);
                 _motor_data->v = direction_modifier * _uint_to_float(v_int, -_V_MAX, _V_MAX, 12);
                 _motor_data->i = direction_modifier * _uint_to_float(i_int, -_I_MAX, _I_MAX, 12);
+                _motor_data->can_len = msg.len;
+                _motor_data->can_b6 = (msg.len > 6) ? msg.buf[6] : 0;
+                _motor_data->can_b7 = (msg.len > 7) ? msg.buf[7] : 0;
+                _motor_data->can_rx_count++;
                 #ifdef MOTOR_DEBUG
                     logger::print("_CANMotor::read_data():Got data-");
                     logger::print("ID:" + String(uint32_t(_motor_data->id)) + ",");
@@ -198,6 +202,10 @@ void _CANMotor::read_data()
                 _motor_data->p = direction_modifier * _uint_to_float(p_int, -_P_MAX, _P_MAX, 16);
                 _motor_data->v = direction_modifier * _uint_to_float(v_int, -_V_MAX, _V_MAX, 12);
                 _motor_data->i = direction_modifier * _uint_to_float(i_int, -_I_MAX, _I_MAX, 12);
+                _motor_data->can_len = msg.len;
+                _motor_data->can_b6 = (msg.len > 6) ? msg.buf[6] : 0;
+                _motor_data->can_b7 = (msg.len > 7) ? msg.buf[7] : 0;
+                _motor_data->can_rx_count++;
                 #ifdef MOTOR_DEBUG
                     logger::print("_CANMotor::read_data():Got data-");
                     logger::print("ID:" + String(uint32_t(_motor_data->id)) + ",");

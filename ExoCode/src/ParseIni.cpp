@@ -1,3 +1,4 @@
+#include "SdOnce.h"
 #include "ParseIni.h"
 #include "Logger.h"
 #include <stdlib.h> 
@@ -70,7 +71,7 @@
         //Setup the SPI to read the SD card
         SPI.begin();
 
-        if (!SD.begin(SD_SELECT))
+        if (!oex_sd_begin(SD_SELECT))
         {
                 while (1)
                 

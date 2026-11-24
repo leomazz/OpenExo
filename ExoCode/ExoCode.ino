@@ -690,6 +690,7 @@ void loop()
 #include "src/GetBulkChar.h"
 
 #include "src/WaistBarometer.h"
+#include "src/PelvisImu.h"
 #include "src/InclineDetector.h"
 
 #define MAIN_DEBUG 0
@@ -781,6 +782,12 @@ void setup()
       real_time_i2c::init();
       logger::print("Setup->End Setup");
     #endif
+
+    //FSR-free: start the onboard IMU (pelvis tilt), streamed to the Teensy
+    if (!nano_pelvis_imu::begin())
+    {
+        Serial.println("Nano IMU not found");
+    }
 }
 
 void loop()
@@ -820,6 +827,7 @@ void loop()
     mcu->handle_ble();
     mcu->local_sample();
     mcu->update_UART();
+    nano_pelvis_imu::update();   //FSR-free: pelvis IMU -> Teensy
     mcu->update_gui();
     mcu->handle_errors();
 

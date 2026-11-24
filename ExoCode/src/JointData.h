@@ -84,6 +84,7 @@ class JointData {
         const float motor_torque_smoothing = 0.1;
         const float torque_error_smoothing = 1;
         float smoothed_motor_torque = 0;
+        bool phase_inhibit = false;     /**< FSR-free safeguard: when true, the joint command is forced to zero */
         const float close_to_zero_tolerance = 0.1;
         float torque_error = 0;
 

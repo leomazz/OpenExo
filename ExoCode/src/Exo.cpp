@@ -9,6 +9,8 @@
 #include "UART_msg_t.h"
 #include "uart_commands.h"
 #include "Logger.h"
+#include "PelvisImu.h"
+#include "DataLoggerSD.h"
 
 //#define EXO_DEBUG  //Uncomment if you want the debug statements to print to serial monitor
 
@@ -87,6 +89,9 @@ bool Exo::run()
         }
 		
         //Record the side data and send new commands to the motors.
+        //FSR-free: update the pelvis tilt before the sides use it
+        pelvis_imu::update();
+
         left_side.run_side();
         right_side.run_side();
 		
@@ -118,6 +123,11 @@ bool Exo::run()
             UART_command_handlers::get_real_time_data(handler, data, msg, data->config);
             rt_delta_t = 0;
         }
+
+        //SD-card data logger (only active during a trial)
+        #if defined(ARDUINO_TEENSY41)
+            datalogger::run(data, (uint32_t)delta_t);
+        #endif
 
         delta_t = 0;
         return true;

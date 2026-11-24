@@ -1,3 +1,4 @@
+#include "SdOnce.h"
 #include "ParamsFromSD.h"
 #include "Logger.h"
 //#define SD_PARAM_DEBUG 1
@@ -65,7 +66,7 @@
                     logger::println("set_controller_params : SPI Begin");
                 #endif
 
-                if (!SD.begin(SD_SELECT))
+                if (!oex_sd_begin(SD_SELECT))
                 {
                     error_type = utils::update_bit((uint8_t)config_defs::joint_id::hip, 1, param_error::SD_not_found_idx);
                     
@@ -261,7 +262,7 @@
                     logger::println("set_controller_params : SPI Begin");
                 #endif
 
-                if (!SD.begin(SD_SELECT))
+                if (!oex_sd_begin(SD_SELECT))
                 {
                     error_type = utils::update_bit((uint8_t)config_defs::joint_id::knee, 1, param_error::SD_not_found_idx);
 
@@ -457,7 +458,7 @@
                     logger::println("set_controller_params : SPI Begin");
                 #endif
 
-                if (!SD.begin(SD_SELECT))
+                if (!oex_sd_begin(SD_SELECT))
                 {
                     error_type = utils::update_bit((uint8_t)config_defs::joint_id::ankle, 1, param_error::SD_not_found_idx);
 
@@ -656,7 +657,7 @@
                     logger::println("set_controller_params : SPI Begin");
                 #endif
 
-                if (!SD.begin(SD_SELECT))
+                if (!oex_sd_begin(SD_SELECT))
                 {
                     error_type = utils::update_bit((uint8_t)config_defs::joint_id::elbow, 1, param_error::SD_not_found_idx);
 
@@ -845,7 +846,7 @@
             {
                 SPI.begin();
 
-                if (!SD.begin(SD_SELECT))
+                if (!oex_sd_begin(SD_SELECT))
                 {
                     error_type = utils::update_bit((uint8_t)config_defs::joint_id::arm_1, 1, param_error::SD_not_found_idx);
                     return error_type;
@@ -930,7 +931,7 @@
             {
                 SPI.begin();
 
-                if (!SD.begin(SD_SELECT))
+                if (!oex_sd_begin(SD_SELECT))
                 {
                     error_type = utils::update_bit((uint8_t)config_defs::joint_id::arm_2, 1, param_error::SD_not_found_idx);
                     return error_type;

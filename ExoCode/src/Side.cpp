@@ -22,6 +22,23 @@ Side::Side(bool is_left, ExoData* exo_data)
 {
 
     _data = exo_data;
+
+    //FSR-free estimators, parameters from FsrFreeConfig.h
+    {
+        PhasePortraitParams pp;
+        pp.alpha = PP_ALPHA;
+        pp.order = PP_FILTER_ORDER;
+        pp.norm_pole_1khz = PP_NORM_POLE_1KHZ;
+        pp.phase_offset_pct = PP_PHASE_OFFSET_PCT;
+        pp.toe_off_pct = PP_TOE_OFF_PCT;
+        pp.initial_stride_ms = PP_INITIAL_STRIDE_MS;
+        pp.min_stride_ms = PP_MIN_STRIDE_MS;
+        pp.max_stride_ms = PP_MAX_STRIDE_MS;
+        pp.min_amplitude_deg = PP_MIN_AMPLITUDE_DEG;
+        pp.strides_to_valid = PP_STRIDES_TO_VALID;
+        _pp_enc = PhasePortrait(pp);
+        _pp_imu = PhasePortrait(pp);
+    }
     
     _is_left = is_left;
     
@@ -102,6 +119,9 @@ void Side::run_side()
 
 void Side::read_data()
 {
+    //FSR-free: give back the fields the FSR pipeline uses as its own memory
+    _restore_fsr_fields();
+
     //Check the FSRs
     _side_data->heel_fsr = _heel_fsr.read();
     _side_data->toe_fsr = _toe_fsr.read();
@@ -168,8 +188,107 @@ void Side::read_data()
     {
         _arm_2.read_data();
     }
-    
+
+    //FSR-free gait phase (after the joints, so that the hip angle is updated)
+    _run_fsr_free();
 };
+
+void Side::_restore_fsr_fields()
+{
+    if (!_fsr_fields_overridden) return;
+    _side_data->expected_step_duration = _fsr_expected_step_duration;
+    _side_data->expected_stance_duration = _fsr_expected_stance_duration;
+    _side_data->expected_swing_duration = _fsr_expected_swing_duration;
+    _fsr_fields_overridden = false;
+}
+
+void Side::_run_fsr_free()
+{
+    const uint32_t t0 = micros();
+
+    //Keep the outputs of the original FSR pipeline for logging and reference
+    _side_data->fsr_percent_gait = _side_data->percent_gait;
+    _side_data->fsr_percent_stance = _side_data->percent_stance;
+    _side_data->fsr_expected_step_duration = _side_data->expected_step_duration;
+    _side_data->fsr_ground_strike = _side_data->ground_strike;
+    _side_data->fsr_toe_off = _side_data->toe_off;
+
+    if (!_side_data->hip.is_used)
+    {
+        _side_data->hip.phase_inhibit = false;
+        return;
+    }
+
+    //Inputs: hip flexion from the encoder and thigh angle relative to the vertical
+    const float sign = _is_left ? HIP_FLEXION_SIGN_LEFT : HIP_FLEXION_SIGN_RIGHT;
+    const float hip_deg = sign * _side_data->hip.position * 57.2957795f;
+    const float thigh_deg = hip_deg - pelvis_imu::state.tilt_deg;
+    const uint32_t now = micros();
+
+    _pp_enc.update(now, hip_deg, true);
+    _pp_imu.update(now, thigh_deg, pelvis_imu::state.ok);
+
+    _side_data->pp_enc_input_deg = hip_deg;
+    _side_data->pp_enc_phase = _pp_enc.phase_pct();
+    _side_data->pp_enc_stride_ms = _pp_enc.stride_ms();
+    _side_data->pp_enc_valid = _pp_enc.valid();
+    _side_data->pp_enc_hs = _pp_enc.heel_strike();
+
+    _side_data->pp_imu_input_deg = thigh_deg;
+    _side_data->pp_imu_phase = _pp_imu.phase_pct();
+    _side_data->pp_imu_stride_ms = _pp_imu.stride_ms();
+    _side_data->pp_imu_valid = _pp_imu.valid();
+    _side_data->pp_imu_hs = _pp_imu.heel_strike();
+
+    //Phase source: the "fcNoFSR" controller (selected in the app) picks it with its
+    //phase_source parameter; otherwise the compile-time PHASE_SOURCE is used.
+    int source = PHASE_SOURCE;
+    if (_side_data->hip.controller.controller == (uint8_t)config_defs::hip_controllers::franks_collins_no_fsr)
+    {
+        const float p = _side_data->hip.controller.parameters[controller_defs::franks_collins_no_fsr::phase_source_idx];
+        source = (p > 1.5f) ? PHASE_SOURCE_ENCODER_IMU : PHASE_SOURCE_ENCODER;
+    }
+    _side_data->phase_source = source;
+
+    if (source == PHASE_SOURCE_FSR)
+    {
+        _side_data->hip.phase_inhibit = false;
+        _side_data->estimator_exec_us = (float)(uint32_t)(micros() - t0);
+        return;
+    }
+
+    const PhasePortrait& e = (source == PHASE_SOURCE_ENCODER) ? _pp_enc : _pp_imu;
+
+    //Save what the FSR pipeline owns, then replace the gait timing seen by the controllers
+    _fsr_expected_step_duration = _side_data->expected_step_duration;
+    _fsr_expected_stance_duration = _side_data->expected_stance_duration;
+    _fsr_expected_swing_duration = _side_data->expected_swing_duration;
+    _fsr_fields_overridden = true;
+
+    if (e.valid())
+    {
+        _side_data->percent_gait = e.phase_pct();
+        _side_data->percent_stance = e.percent_stance();
+        _side_data->percent_swing = e.percent_swing();
+        _side_data->expected_step_duration = e.stride_ms();
+        _side_data->expected_stance_duration = e.stance_ms();
+        _side_data->expected_swing_duration = e.swing_ms();
+        _side_data->ground_strike = e.heel_strike();
+        _side_data->toe_off = e.toe_off();
+        _side_data->hip.phase_inhibit = false;
+    }
+    else
+    {
+        _side_data->percent_gait = -1;
+        _side_data->percent_stance = 0;
+        _side_data->percent_swing = -1;
+        _side_data->ground_strike = false;
+        _side_data->toe_off = false;
+        _side_data->hip.phase_inhibit = true;   //safeguard: zero assistance
+    }
+
+    _side_data->estimator_exec_us = (float)(uint32_t)(micros() - t0);
+}
 
 void Side::check_calibration()
 {

@@ -105,6 +105,13 @@ namespace controller_defs                   /**< Stores the parameter indexes fo
         const uint8_t num_parameter = 15;                   
     }
 
+    /* Franks-Collins without FSR: parameters 0-14 are those of franks_collins_hip, plus the phase source. */
+    namespace franks_collins_no_fsr
+    {
+        const uint8_t phase_source_idx = 15;                    //1 = hip encoder, 2 = hip encoder + pelvis IMU (thigh angle)
+        const uint8_t num_parameter = 16;
+    }
+
     namespace constant_torque
     {
         const uint8_t amplitude_idx = 0;                //Magnitude of the applied torque, in Nm

@@ -522,6 +522,7 @@ HipJoint::HipJoint(config_defs::joint_id id, ExoData* exo_data)
 : _Joint(id, exo_data)  // <-- Initializer list
 , _zero_torque(id, exo_data)
 , _franks_collins_hip(id, exo_data)
+, _franks_collins_no_fsr(id, exo_data)
 , _spline(id, exo_data)
 , _constant_torque(id, exo_data)
 , _chirp(id, exo_data)
@@ -651,6 +652,12 @@ void HipJoint::run_joint()
     //Calculate the motor command
     _joint_data->controller.setpoint = _controller->calc_motor_cmd();
 
+    //FSR-free safeguard: no assistance while the estimated phase is not trusted
+    if (_joint_data->phase_inhibit)
+    {
+        _joint_data->controller.setpoint = 0;
+    }
+
     //Check for joint errors
     const uint16_t exo_status = _data->get_status();
     const bool correct_status = (exo_status == status_defs::messages::trial_on) || 
@@ -713,6 +720,9 @@ void HipJoint::set_controller(uint8_t controller_id)
             break;
         case (uint8_t)config_defs::hip_controllers::franks_collins_hip :
             _controller = &_franks_collins_hip;
+            break;
+        case (uint8_t)config_defs::hip_controllers::franks_collins_no_fsr :
+            _controller = &_franks_collins_no_fsr;
             break;
         case (uint8_t)config_defs::hip_controllers::spline :
             _controller = &_spline;

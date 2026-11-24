@@ -1,6 +1,7 @@
 #ifndef UART_COMMANDS_H
 #define UART_COMMANDS_H
 
+#include "PelvisImu.h"
 #include "Arduino.h"
 #include "UARTHandler.h"
 #include "UART_msg_t.h"
@@ -50,6 +51,7 @@ namespace UART_command_names
     static const uint8_t get_system_reset = 0x19;
     static const uint8_t update_system_reset = 0x1A;
     static const uint8_t update_controller_param_ack = 0x1B;
+    static const uint8_t update_pelvis_imu = 0x1C;   // FSR-free: Nano -> Teensy, pelvis IMU sample
 };
 
 /**
@@ -853,6 +855,16 @@ namespace UART_command_utils
     {
         if (msg.command == UART_command_names::empty_msg)
         {
+            return;
+        }
+
+        // FSR-free: pelvis IMU samples arrive at ~100 Hz; store them and return
+        // before the debug print below, so they do not flood the serial port.
+        if (msg.command == UART_command_names::update_pelvis_imu)
+        {
+            #if defined(ARDUINO_TEENSY36) || defined(ARDUINO_TEENSY41)
+                pelvis_imu::store_message(msg.data, msg.len);
+            #endif
             return;
         }
 

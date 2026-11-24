@@ -140,6 +140,26 @@ namespace
         param_bound(false, 0.0f, 10000.0f, false),  // 14 d_gain
     };
 
+    const ParameterBoundConfig franks_collins_no_fsr_bounds[controller_defs::franks_collins_no_fsr::num_parameter] =
+    {
+        param_bound(false, 0.0f, 300.0f, false),    // 0 mass
+        param_bound(false, -5.0f, 5.0f, false),     // 1 trough_normalized_torque
+        param_bound(false, -5.0f, 5.0f, false),     // 2 peak_normalized_torque
+        param_bound(false, 0.0f, 100.0f, false),    // 3 start_percent_gait
+        param_bound(false, 0.0f, 100.0f, false),    // 4 trough_onset_percent_gait
+        param_bound(false, 0.0f, 100.0f, false),    // 5 trough_percent_gait
+        param_bound(false, 0.0f, 100.0f, false),    // 6 mid_time
+        param_bound(false, 0.0f, 100.0f, false),    // 7 mid_duration
+        param_bound(false, 0.0f, 100.0f, false),    // 8 peak_percent_gait
+        param_bound(false, 0.0f, 100.0f, false),    // 9 peak_offset_percent_gait
+        param_bound(false, 0.0f, 1.0f, true),       // 10 sim_gait
+        param_bound(false, 0.0f, 1.0f, true),       // 11 use_pid
+        param_bound(false, 0.0f, 10000.0f, false),  // 12 p_gain
+        param_bound(false, 0.0f, 10000.0f, false),  // 13 i_gain
+        param_bound(false, 0.0f, 10000.0f, false),  // 14 d_gain
+        param_bound(false, 1.0f, 2.0f, true),       // 15 phase_source (1 encoder, 2 encoder+IMU)
+    };
+
     const ParameterBoundConfig constant_torque_bounds[controller_defs::constant_torque::num_parameter] =
     {
         param_bound(false, -100.0f, 100.0f, false), // 0 amplitude
@@ -290,6 +310,11 @@ namespace
     bool bounds_for_franks_collins_hip(uint8_t parameter_index, float* min_out, float* max_out, bool* integer_only_out)
     {
         return read_parameter_bound(franks_collins_hip_bounds, PARAM_BOUND_COUNT(franks_collins_hip_bounds), parameter_index, min_out, max_out, integer_only_out);
+    }
+
+    bool bounds_for_franks_collins_no_fsr(uint8_t parameter_index, float* min_out, float* max_out, bool* integer_only_out)
+    {
+        return read_parameter_bound(franks_collins_no_fsr_bounds, PARAM_BOUND_COUNT(franks_collins_no_fsr_bounds), parameter_index, min_out, max_out, integer_only_out);
     }
 
     bool bounds_for_constant_torque(uint8_t parameter_index, float* min_out, float* max_out, bool* integer_only_out)
@@ -462,6 +487,8 @@ uint8_t ControllerData::get_parameter_length_for(config_defs::JointType joint, u
                     return controller_defs::zero_torque::num_parameter;
                 case (uint8_t)config_defs::hip_controllers::franks_collins_hip:
                     return controller_defs::franks_collins_hip::num_parameter;
+                case (uint8_t)config_defs::hip_controllers::franks_collins_no_fsr:
+                    return controller_defs::franks_collins_no_fsr::num_parameter;
                 case (uint8_t)config_defs::hip_controllers::constant_torque:
                     return controller_defs::constant_torque::num_parameter;
                 case (uint8_t)config_defs::hip_controllers::chirp:
@@ -601,6 +628,8 @@ bool ControllerData::get_parameter_bounds_for(
                     return bounds_for_zero_torque(parameter_index, min_value, max_value, integer_only);
                 case (uint8_t)config_defs::hip_controllers::franks_collins_hip:
                     return bounds_for_franks_collins_hip(parameter_index, min_value, max_value, integer_only);
+                case (uint8_t)config_defs::hip_controllers::franks_collins_no_fsr:
+                    return bounds_for_franks_collins_no_fsr(parameter_index, min_value, max_value, integer_only);
                 case (uint8_t)config_defs::hip_controllers::constant_torque:
                     return bounds_for_constant_torque(parameter_index, min_value, max_value, integer_only);
                 case (uint8_t)config_defs::hip_controllers::chirp:

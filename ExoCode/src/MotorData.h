@@ -58,6 +58,10 @@ class MotorData
 		
 		//Real-time Maxon Motor Reset Feedback
 		int maxon_plotting_scalar = 1;
+        uint8_t can_len = 0;        /**< Length of the last CAN reply (raw, for logging) */
+        uint8_t can_b6 = 0;         /**< Raw byte 6 of the last CAN reply (temperature on some AK firmwares; CHECK the CubeMars manual) */
+        uint8_t can_b7 = 0;         /**< Raw byte 7 of the last CAN reply (error code on some AK firmwares; CHECK the CubeMars manual) */
+        uint32_t can_rx_count = 0;  /**< Number of CAN replies decoded */
 
 };
 
